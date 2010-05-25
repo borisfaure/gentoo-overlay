@@ -19,7 +19,8 @@ IUSE="gtk salsa"
 DEPEND="sys-apps/gawk
 	>=x11-libs/gtk+-2
 	>=sys-kernel/linux-headers-2.6.11
-	!media-sound/oss"
+	!media-sound/oss
+	salsa? ( media-libs/alsa-lib )"
 RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/build"
