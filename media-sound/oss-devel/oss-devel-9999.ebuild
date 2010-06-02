@@ -17,10 +17,11 @@ KEYWORDS="~amd64 ~x86"
 IUSE="gtk salsa"
 
 DEPEND="sys-apps/gawk
-	>=x11-libs/gtk+-2
 	>=sys-kernel/linux-headers-2.6.11
-	!media-sound/oss
-	salsa? ( media-libs/alsa-lib )"
+	gtk? ( >=x11-libs/gtk+-2 )
+	salsa? ( media-libs/alsa-lib )
+	!media-sound/oss"
+
 RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/build"
@@ -36,19 +37,13 @@ src_unpack() {
 
 src_configure() {
 	local myconf="--enable-libsalsa=$(use salsa && echo YES || echo NO)"
-	
-	cd "${WORKDIR}/build"
 
 	# Configure has to be run from build dir with full path.
-	"${S}"/configure \
-		${myconf} || die "configure failed"
+	cd "${WORKDIR}/build"
+	"${WORKDIR}/opensound/configure" ${myconf} || die "configure failed"
 }
 
 src_compile() {
-	einfo "Running configure..."
-	cd "${WORKDIR}/build"
-	"${WORKDIR}/opensound/configure" || die "configure failed"
-
 	einfo "Stripping compiler flags..."
 	sed -i -e 's/-D_KERNEL//' \
 		"${WORKDIR}/build/Makefile"
