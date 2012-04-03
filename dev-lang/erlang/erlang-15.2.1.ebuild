@@ -1,11 +1,11 @@
-# Copyright 1999-2010 Gentoo Foundation
+# Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-lang/erlang/erlang-14.1.ebuild,v 1.6 2010/09/30 19:29:19 grobian Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-lang/erlang/erlang-15.2.ebuild,v 1.1 2012/03/01 10:03:53 djc Exp $
 
 EAPI=3
 WX_GTK_VER="2.8"
 
-inherit autotools elisp-common eutils multilib versionator wxwidgets
+inherit elisp-common eutils java-pkg-opt-2 multilib versionator wxwidgets
 
 # NOTE: If you need symlinks for binaries please tell maintainers or
 # open up a bug to let it be created.
@@ -16,7 +16,7 @@ inherit autotools elisp-common eutils multilib versionator wxwidgets
 
 # the next line selects the right source.
 ERL_VER=($(get_version_components))
-MY_PV="R$(get_major_version)B${ERL_VER[2]}"
+MY_PV="R$(get_major_version)B0${ERL_VER[2]}"
 
 # ATTN!! Take care when processing the C, etc version!
 MY_P=otp_src_${MY_PV}
@@ -27,10 +27,10 @@ SRC_URI="http://www.erlang.org/download/${MY_P}.tar.gz
 	http://erlang.org/download/otp_doc_man_${MY_PV}.tar.gz
 	doc? ( http://erlang.org/download/otp_doc_html_${MY_PV}.tar.gz )"
 
-LICENSE="EPL"
+LICENSE="ErlPL-1.1"
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~ia64 ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd ~x86-freebsd ~amd64-linux ~x86-linux ~ppc-macos ~x86-macos ~x64-solaris"
-IUSE="doc emacs hipe java kpoll odbc smp sctp ssl tk wxwidgets"
+IUSE="compat-ethread doc emacs halfword hipe java kpoll odbc smp sctp ssl tk wxwidgets"
 
 RDEPEND=">=dev-lang/perl-5.6.1
 	ssl? ( >=dev-libs/openssl-0.9.7d )
@@ -48,6 +48,9 @@ SITEFILE=50${PN}-gentoo.el
 
 pkg_setup() {
 	use wxwidgets && wxwidgets_pkg_setup
+	if use halfword ; then
+		use amd64 || die "halfword support is limited to amd64"
+	fi
 }
 
 src_prepare() {
@@ -58,20 +61,16 @@ src_prepare() {
 		rm -rf lib/wx
 	fi
 
-	if use hipe; then
-		ewarn
-		ewarn "You enabled High performance Erlang. Be aware that this extension"
-		ewarn "can break the compilation in many ways, especially on hardened systems."
-		ewarn "Don't cry, don't file bugs, just disable it! If you have a fix, tell us though on Bugzilla."
-		ewarn
-	fi
+	# Nasty workaround, reported upstream
+	cp "${S}"/lib/configure.in.src "${S}"/lib/configure.in || die
 
 	# prevent configure from injecting -m32 by default on Darwin, bug #334155
+	# Nasty hack
 	sed -i -e 's/Darwin-i386/Darwin-NO/' configure.in || die
 	sed -i -e '/\<\(LD\|C\)FLAGS="-m32/s/-m32//' erts/configure.in || die
 
-	einfo "mv ${S}/lib/configure.in.src ${S}/lib/configure.in"
-	mv ${S}/lib/configure.in.src ${S}/lib/configure.in
+	# bug 383697
+	sed -i '1i#define OF(x) x' erts/emulator/drivers/common/gzio.c || die
 }
 
 src_configure() {
@@ -81,11 +80,13 @@ src_configure() {
 		--enable-threads \
 		--enable-shared-zlib \ \
 		$(use_enable sctp) \
+		$(use_enable halfword halfword-emulator) \
 		$(use_enable hipe) \
 		$(use_with ssl ssl "${EPREFIX}"/usr) \
 		$(use_enable ssl dynamic-ssl-lib) \
 		$(use_enable kpoll kernel-poll) \
 		$(use_enable smp smp-support) \
+		$(use compat-ethread && echo "--enable-ethread-pre-pentium4-compatibility") \
 		|| die
 }
 
@@ -158,6 +159,8 @@ src_install() {
 	# prepare erl for SMP, fixes bug #188112
 	use smp && sed -i -e 's:\(exec.*erlexec\):\1 -smp:' \
 		"${ED}/${ERL_LIBDIR}/bin/erl"
+
+	newinitd "${FILESDIR}"/epmd.init epmd || die
 }
 
 pkg_postinst() {
