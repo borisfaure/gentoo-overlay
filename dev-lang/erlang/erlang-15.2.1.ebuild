@@ -56,6 +56,9 @@ pkg_setup() {
 src_prepare() {
 	use odbc || sed -i 's: odbc : :' lib/Makefile
 
+	# bug 263129, don't ignore LDFLAGS, reported upstream
+	sed -e 's:LDFLAGS = \$(DED_LDFLAGS):LDFLAGS += \$(DED_LDFLAGS):' -i "${S}"/lib/megaco/src/flex/Makefile.in || die
+
 	if ! use wxwidgets; then
 		sed -i 's: wx : :' lib/Makefile
 		rm -rf lib/wx
