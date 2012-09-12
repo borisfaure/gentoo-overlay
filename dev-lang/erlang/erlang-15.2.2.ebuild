@@ -59,6 +59,9 @@ src_prepare() {
 	# bug 263129, don't ignore LDFLAGS, reported upstream
 	sed -e 's:LDFLAGS = \$(DED_LDFLAGS):LDFLAGS += \$(DED_LDFLAGS):' -i "${S}"/lib/megaco/src/flex/Makefile.in || die
 
+	# don't ignore LDFLAGS, reported upstream
+	sed -e 's:LDFLAGS =  \$(ODBC_LIB) \$(EI_LDFLAGS):LDFLAGS += \$(ODBC_LIB) \$(EI_LDFLAGS):' -i "${S}"/lib/odbc/c_src/Makefile.in || die
+
 	if ! use wxwidgets; then
 		sed -i 's: wx : :' lib/Makefile
 		rm -rf lib/wx
@@ -67,11 +70,6 @@ src_prepare() {
 	# Nasty workaround, reported upstream
 	cp "${S}"/lib/configure.in.src "${S}"/lib/configure.in || die
 
-	# bug 383697
-	sed -i '1i#define OF(x) x' erts/emulator/drivers/common/gzio.c || die
-
-	# don't ignore LDFLAGS, reported upstream
-	sed -e 's:LDFLAGS =  \$(ODBC_LIB) \$(EI_LDFLAGS):LDFLAGS += \$(ODBC_LIB) \$(EI_LDFLAGS):' -i "${S}"/lib/odbc/c_src/Makefile.in || die
 }
 
 src_configure() {
