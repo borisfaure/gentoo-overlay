@@ -69,6 +69,9 @@ src_prepare() {
 
 	# bug 383697
 	sed -i '1i#define OF(x) x' erts/emulator/drivers/common/gzio.c || die
+
+	# don't ignore LDFLAGS, reported upstream
+	sed -e 's:LDFLAGS =  \$(ODBC_LIB) \$(EI_LDFLAGS):LDFLAGS += \$(ODBC_LIB) \$(EI_LDFLAGS):' -i "${S}"/lib/odbc/c_src/Makefile.in || die
 }
 
 src_configure() {
@@ -155,8 +158,8 @@ src_install() {
 		popd
 	fi
 
-	# prepare erl for SMP, fixes bug #188112
-	use smp && sed -i -e 's:\(exec.*erlexec\):\1 -smp:' \
+	# prepare erl for SMP
+	use smp && sed -i -e 's:\(exec.*erlexec"\):\1 -smp:' \
 		"${ED}/${ERL_LIBDIR}/bin/erl"
 
 	newinitd "${FILESDIR}"/epmd.init epmd || die
