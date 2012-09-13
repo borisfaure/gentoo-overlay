@@ -70,6 +70,8 @@ src_prepare() {
 	# Nasty workaround, reported upstream
 	cp "${S}"/lib/configure.in.src "${S}"/lib/configure.in || die
 
+	# bug 383697
+	sed -i '1i#define OF(x) x' erts/emulator/drivers/common/gzio.c || die
 }
 
 src_configure() {
@@ -92,7 +94,7 @@ src_configure() {
 
 src_compile() {
 	use java || export JAVAC=false
-	emake -j1 || die
+	emake || die
 
 	if use emacs ; then
 		pushd lib/tools/emacs
@@ -155,10 +157,6 @@ src_install() {
 		elisp-site-file-install "${T}"/${SITEFILE}
 		popd
 	fi
-
-	# prepare erl for SMP
-	use smp && sed -i -e 's:\(exec.*erlexec"\):\1 -smp:' \
-		"${ED}/${ERL_LIBDIR}/bin/erl"
 
 	newinitd "${FILESDIR}"/epmd.init epmd || die
 }
