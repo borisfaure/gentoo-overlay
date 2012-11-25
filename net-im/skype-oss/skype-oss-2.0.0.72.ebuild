@@ -4,7 +4,7 @@
 
 EAPI=1
 
-inherit eutils qt4 pax-utils
+inherit eutils pax-utils
 
 DESCRIPTION="A P2P-VoiceIP client, statically linked against OSS binary"
 HOMEPAGE="http://www.skype.com/"
