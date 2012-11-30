@@ -1,6 +1,6 @@
 # Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-lang/erlang/erlang-15.2.1.ebuild,v 1.1 2012/05/14 07:46:45 djc Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-lang/erlang/erlang-15.2.2.ebuild,v 1.1 2012/10/05 08:18:10 djc Exp $
 
 EAPI=3
 WX_GTK_VER="2.8"
@@ -112,7 +112,7 @@ src_install() {
 	local ERL_INTERFACE_VER=$(extract_version lib/erl_interface EI_VSN)
 	local ERL_ERTS_VER=$(extract_version erts VSN)
 
-	emake -j1 INSTALL_PREFIX="${D}" install || die
+	emake INSTALL_PREFIX="${D}" install || die
 	dodoc AUTHORS README.md
 
 	dosym "${ERL_LIBDIR}/bin/erl" /usr/bin/erl
@@ -136,7 +136,7 @@ src_install() {
 		dodir "${ERL_LIBDIR}/${i##${WORKDIR}}"
 	done
 	for file in "${WORKDIR}"/man/man*/*.[1-9]; do
-			# doman sucks so we can't use it
+		# doman sucks so we can't use it
 		cp ${file} "${ED}/${ERL_LIBDIR}"/man/man${file##*.}/
 	done
 	# extend MANPATH, so the normal man command can find it
