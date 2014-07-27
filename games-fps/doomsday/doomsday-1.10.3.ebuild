@@ -20,7 +20,7 @@ IUSE="openal snowberry +doom demo freedoom heretic hexen resources"
 DEPEND="
 	virtual/opengl
 	virtual/glu
-	media-libs/libsdl[joystick,audio]
+	media-libs/libsdl[joystick]
 	media-libs/sdl-mixer
 	media-libs/libpng
 	dev-qt/qtopengl:4
