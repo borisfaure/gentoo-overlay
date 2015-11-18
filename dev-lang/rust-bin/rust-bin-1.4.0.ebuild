@@ -6,7 +6,7 @@ EAPI=5
 
 inherit eutils bash-completion-r1
 
-MY_P="rustc-${PV}"
+MY_P="rust-${PV}"
 
 DESCRIPTION="Systems programming language from Mozilla"
 HOMEPAGE="http://www.rust-lang.org/"
@@ -16,7 +16,7 @@ SRC_URI="amd64? ( http://static.rust-lang.org/dist/${MY_P}-x86_64-unknown-linux-
 LICENSE="|| ( MIT Apache-2.0 ) BSD-1 BSD-2 BSD-4 UoI-NCSA"
 SLOT="stable"
 KEYWORDS="~amd64 ~x86"
-IUSE=""
+IUSE="cargo doc"
 
 DEPEND=">=app-eselect/eselect-rust-0.3_pre20150425
 	!dev-lang/rust:0
@@ -33,9 +33,15 @@ src_unpack() {
 }
 
 src_install() {
-	local components=rustc
+	echo "rustc" > components
+	if use cargo ;  then
+		echo "cargo" >> components
+	fi
+	if use doc;  then
+		echo "rust-docs" >> components
+	fi
+	cat components
 	./install.sh \
-		--components="${components}" \
 		--disable-verify \
 		--prefix="${D}/opt/${P}" \
 		--mandir="${D}/usr/share/${P}/man" \
@@ -45,14 +51,23 @@ src_install() {
 	local rustc=rustc-bin-${PV}
 	local rustdoc=rustdoc-bin-${PV}
 	local rustgdb=rust-gdb-bin-${PV}
+	if use cargo ;  then
+		local cargo=cargo-bin-${PV}
+	fi
 
 	mv "${D}/opt/${P}/bin/rustc" "${D}/opt/${P}/bin/${rustc}" || die
 	mv "${D}/opt/${P}/bin/rustdoc" "${D}/opt/${P}/bin/${rustdoc}" || die
 	mv "${D}/opt/${P}/bin/rust-gdb" "${D}/opt/${P}/bin/${rustgdb}" || die
+	if use cargo ;  then
+		mv "${D}/opt/${P}/bin/cargo" "${D}/opt/${P}/bin/${cargo}" || die
+	fi
 
 	dosym "/opt/${P}/bin/${rustc}" "/usr/bin/${rustc}"
 	dosym "/opt/${P}/bin/${rustdoc}" "/usr/bin/${rustdoc}"
 	dosym "/opt/${P}/bin/${rustgdb}" "/usr/bin/${rustgdb}"
+	if use cargo ;  then
+		dosym "/opt/${P}/bin/${cargo}" "/usr/bin/${cargo}"
+	fi
 
 	cat <<-EOF > "${T}"/50${P}
 	LDPATH="/opt/${P}/lib"
@@ -64,6 +79,11 @@ src_install() {
 	/usr/bin/rustdoc
 	/usr/bin/rust-gdb
 	EOF
+	if use cargo ;  then
+		cat <<-EOF > "${T}/provider-${P}"
+		/usr/bin/cargo
+		EOF
+	fi
 	dodir /etc/env.d/rust
 	insinto /etc/env.d/rust
 	doins "${T}/provider-${P}"
