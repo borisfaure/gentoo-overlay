@@ -68,6 +68,9 @@ src_install() {
 	if use cargo ;  then
 		dosym "/opt/${P}/bin/${cargo}" "/usr/bin/${cargo}"
 	fi
+	if use doc;  then
+		dosym "/opt/${P}/share/doc/" "/usr/share/doc/${MY_P}"
+	fi
 
 	cat <<-EOF > "${T}"/50${P}
 	LDPATH="/opt/${P}/lib"
