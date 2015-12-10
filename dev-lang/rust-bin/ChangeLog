@@ -77,3 +77,10 @@
   Add "cargo" and "doc" USE flags to install cargo and/or the documentation
 
   Package-Manager: portage-2.2.20.1
+
+*rust-bin-1.5.0 (10 Dec 2015)
+
+  10 Dec 2015; Boris Faure <gentoo@boris.fau.re> +rust-bin-1.5.0.ebuild:
+  version bump
+
+  Package-Manager: portage-2.2.24
