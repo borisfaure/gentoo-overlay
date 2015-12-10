@@ -2,6 +2,11 @@
 # Copyright 1999-2015 Gentoo Foundation; Distributed under the GPL v2
 # $Header: /var/cvsroot/gentoo-x86/app-forensics/afl/ChangeLog,v 1.9 2015/06/01 22:15:04 hanno Exp $
 
+*afl-1.95b (10 Dec 2015)
+
+  10 Dec 2015; Boris Faure <boris@fau.re> +afl-1.95b.ebuild:
+  Version bump.
+
 *afl-1.94b (23 Sept 2015)
 
   23 Sept 2015; Boris Faure <boris@fau.re> +afl-1.94b.ebuild:
