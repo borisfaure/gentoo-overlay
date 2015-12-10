@@ -34,6 +34,12 @@ src_unpack() {
 
 src_install() {
 	echo "rustc" > components
+	if use x86 ; then
+		echo "rust-std-x86-unknown-linux-gnu" >> components
+	fi
+	if use amd64 ; then
+		echo "rust-std-x86_64-unknown-linux-gnu" >> components
+	fi
 	if use cargo ;  then
 		echo "cargo" >> components
 	fi
@@ -42,7 +48,6 @@ src_install() {
 	fi
 	cat components
 	./install.sh \
-		--disable-verify \
 		--prefix="${D}/opt/${P}" \
 		--mandir="${D}/usr/share/${P}/man" \
 		--disable-ldconfig \
