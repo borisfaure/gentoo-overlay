@@ -88,7 +88,7 @@ src_install() {
 	/usr/bin/rust-gdb
 	EOF
 	if use cargo ;  then
-		cat <<-EOF > "${T}/provider-${P}"
+		cat <<-EOF >> "${T}/provider-${P}"
 		/usr/bin/cargo
 		EOF
 	fi
