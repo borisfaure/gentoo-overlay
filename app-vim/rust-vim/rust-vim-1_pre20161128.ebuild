@@ -7,7 +7,7 @@ EAPI=6
 inherit vim-plugin vcs-snapshot
 
 MY_PN="${PN/-/.}"
-REF="59e5e2f8b7df21eb438124b95c7295da9c53e1d7"
+REF="eed97e75117faaf210cb6103cf39a797fe21bfbe"
 
 DESCRIPTION="Vim configuration for Rust"
 HOMEPAGE="http://www.rust-lang.org/"
