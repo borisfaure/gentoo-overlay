@@ -207,3 +207,9 @@
   version bump
 
   Package-Manager: portage-2.3.13
+
+*rust-bin-1.23.0 (04 Jan 2018)
+  04 Jan 2018; Boris Faure <gentoo@boris.fau.re> +rust-bin-1.23.0.ebuild:
+  version bump
+
+  Package-Manager: portage-2.3.13
