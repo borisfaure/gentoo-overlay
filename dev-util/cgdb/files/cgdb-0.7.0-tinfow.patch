@@ -1,0 +1,25 @@
+diff -urN cgdb-0.7.0.orig/config/readline_check_version.m4 cgdb-0.7.0/config/readline_check_version.m4
+--- cgdb-0.7.0.orig/config/readline_check_version.m4	2019-07-30 18:41:26.883826544 +0300
++++ cgdb-0.7.0/config/readline_check_version.m4	2019-07-30 18:42:32.355860850 +0300
+@@ -8,9 +8,10 @@
+ fi
+ AC_CACHE_VAL(bash_cv_termcap_lib,
+ [AC_CHECK_LIB(]$curses_lib_name[, tgetent, bash_cv_termcap_lib=lib]$curses_lib_name[,
++  [AC_CHECK_LIB(tinfow, tgetent, bash_cv_termcap_lib=libtinfow,
+   [AC_CHECK_LIB(tinfo, tgetent, bash_cv_termcap_lib=libtinfo,
+     [AC_CHECK_FUNC(tgetent, bash_cv_termcap_lib=libc,
+-      bash_cv_termcap_lib=gnutermcap)])])])
++      bash_cv_termcap_lib=gnutermcap)])])])])
+ if test "X$_bash_needmsg" = "Xyes"; then
+ AC_MSG_CHECKING(which library has the termcap functions)
+ fi
+@@ -19,6 +20,9 @@
+ LDFLAGS="$LDFLAGS -L./lib/termcap"
+ TERMCAP_LIB="./lib/termcap/libtermcap.a"
+ TERMCAP_DEP="./lib/termcap/libtermcap.a"
++elif test $bash_cv_termcap_lib = libtinfow; then
++TERMCAP_LIB=-ltinfow
++TERMCAP_DEP=
+ elif test $bash_cv_termcap_lib = libtinfo; then
+ TERMCAP_LIB=-ltinfo
+ TERMCAP_DEP=
