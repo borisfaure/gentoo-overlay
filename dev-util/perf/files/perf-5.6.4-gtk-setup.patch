@@ -1,0 +1,37 @@
+diff --git a/ui/setup.c b/tools/perf/ui/setup.c
+index 700335cde618..5166cf0d77e0 100644
+--- a/ui/setup.c
++++ b/ui/setup.c
+@@ -1,6 +1,8 @@
+ // SPDX-License-Identifier: GPL-2.0
+ #include <pthread.h>
+ #include <dlfcn.h>
++#include <errno.h>
++#include <string.h>
+ #include <unistd.h>
+ 
+ #include <subcmd/pager.h>
+@@ -29,15 +31,21 @@ static int setup_gtk_browser(void)
+ 		scnprintf(buf, sizeof(buf), "%s/%s", LIBDIR, PERF_GTK_DSO);
+ 		perf_gtk_handle = dlopen(buf, RTLD_LAZY);
+ 	}
+-	if (perf_gtk_handle == NULL)
++	if (perf_gtk_handle == NULL) {
++		printf("GTK browser requested but dlopen() failed: %s\n",
++		       strerror(errno));
+ 		return -1;
++	}
+ 
+ 	perf_ui_init = dlsym(perf_gtk_handle, "perf_gtk__init");
+-	if (perf_ui_init == NULL)
++	if (perf_ui_init == NULL) {
++		printf("GTK browser requested but can not find symbol 'perf_ui_init'\n");
+ 		goto out_close;
++	}
+ 
+ 	if (perf_ui_init() == 0)
+ 		return 0;
++        printf("GTK browser requested but perf_ui_init() failed\n");
+ 
+ out_close:
+ 	dlclose(perf_gtk_handle);
