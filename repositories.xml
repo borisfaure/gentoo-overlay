@@ -2,7 +2,7 @@
 
 <repositories version="1.0">
 	<repo priority="50" quality="experimental" status="unofficial">
-		<name>billiob's overlay</name>
+		<name>billiob</name>
 		<description></description>
 		<homepage>https://github.com/billiob/gentoo-overlay</homepage>
 		<owner>
