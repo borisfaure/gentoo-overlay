@@ -1,32 +1,53 @@
-# Copyright 1999-2020 Gentoo Authors
+# Copyright 1999-2022 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-inherit bash-completion-r1 rust-toolchain toolchain-funcs multilib-minimal
+inherit multilib prefix rust-toolchain toolchain-funcs verify-sig multilib-minimal
 
 MY_P="rust-${PV}"
+# curl -L static.rust-lang.org/dist/channel-rust-${PV}.toml 2>/dev/null | grep "xz_url.*rust-src"
+MY_SRC_URI="${RUST_TOOLCHAIN_BASEURL%/}/2022-04-07/rust-src-${PV}.tar.xz"
 
 DESCRIPTION="Systems programming language from Mozilla"
 HOMEPAGE="https://www.rust-lang.org/"
-SRC_URI="$(rust_all_arch_uris ${MY_P})"
+SRC_URI="$(rust_all_arch_uris ${MY_P})
+	rust-src? ( ${MY_SRC_URI} )
+"
 
 LICENSE="|| ( MIT Apache-2.0 ) BSD-1 BSD-2 BSD-4 UoI-NCSA"
 SLOT="stable"
-KEYWORDS="~amd64 ~arm ~arm64 ~ppc64 ~x86"
-IUSE="clippy cpu_flags_x86_sse2 doc rls rustfmt"
+KEYWORDS="~amd64 ~arm ~arm64 ~ppc ~ppc64 ~riscv ~s390 ~x86"
+IUSE="clippy cpu_flags_x86_sse2 doc prefix rls rust-src rustfmt"
 
 DEPEND=""
-RDEPEND=">=app-eselect/eselect-rust-20190311"
+
+RDEPEND="
+	>=app-eselect/eselect-rust-20190311
+	sys-apps/lsb-release
+"
+
+BDEPEND="
+	prefix? ( dev-util/patchelf )
+	verify-sig? ( sec-keys/openpgp-keys-rust )
+"
 
 REQUIRED_USE="x86? ( cpu_flags_x86_sse2 )"
 
 QA_PREBUILT="
 	opt/${P}/bin/.*
 	opt/${P}/lib/.*.so
+	opt/${P}/libexec/.*
 	opt/${P}/lib/rustlib/.*/bin/.*
 	opt/${P}/lib/rustlib/.*/lib/.*
 "
+
+# An rmeta file is custom binary format that contains the metadata for the crate.
+# rmeta files do not support linking, since they do not contain compiled object files.
+# so we can safely silence the warning for this QA check.
+QA_EXECSTACK="opt/${P}/lib/rustlib/*/lib*.rlib:lib.rmeta"
+
+VERIFY_SIG_OPENPGP_KEY_PATH="${BROOT}/usr/share/openpgp-keys/rust.asc"
 
 pkg_pretend() {
 	if [[ "$(tc-is-softfloat)" != "no" ]] && [[ ${CHOST} == armv7* ]]; then
@@ -35,8 +56,29 @@ pkg_pretend() {
 }
 
 src_unpack() {
-	default
+	# sadly rust-src tarball does not have corresponding .asc file
+	# so do partial verification
+	if use verify-sig; then
+		for f in ${A}; do
+			if [[ -f ${DISTDIR}/${f}.asc ]]; then
+				verify-sig_verify_detached "${DISTDIR}/${f}" "${DISTDIR}/${f}.asc"
+			fi
+		done
+	fi
+
+	default_src_unpack
+
 	mv "${WORKDIR}/${MY_P}-$(rust_abi)" "${S}" || die
+}
+
+patchelf_for_bin() {
+	local filetype=$(file -b ${1})
+	if [[ ${filetype} == *ELF*interpreter* ]]; then
+		einfo "${1}'s interpreter changed"
+		patchelf ${1} --set-interpreter ${2} || die
+	elif [[ ${filetype} == *script* ]]; then
+		hprefixify ${1}
+	fi
 }
 
 multilib_src_install() {
@@ -52,6 +94,13 @@ multilib_src_install() {
 	use clippy && components="${components},clippy-preview"
 	use rls && components="${components},rls-preview,${analysis}"
 	use rustfmt && components="${components},rustfmt-preview"
+	# Rust component 'rust-src' is extracted from separate archive
+	if use rust-src; then
+		einfo "Combining rust and rust-src installers"
+		mv -v "${WORKDIR}/rust-src-${PV}/rust-src" "${S}" || die
+		echo rust-src >> ./components || die
+		components="${components},rust-src"
+	fi
 	./install.sh \
 		--components="${components}" \
 		--disable-verify \
@@ -59,6 +108,16 @@ multilib_src_install() {
 		--mandir="${ED}/opt/${P}/man" \
 		--disable-ldconfig \
 		|| die
+
+	if use prefix; then
+		local interpreter=$(patchelf --print-interpreter ${EPREFIX}/bin/bash)
+		ebegin "Changing interpreter to ${interpreter} for Gentoo prefix at ${ED}/opt/${P}/bin"
+		find "${ED}/opt/${P}/bin" -type f -print0 | \
+			while IFS=  read -r -d '' filename; do
+				patchelf_for_bin ${filename} ${interpreter} \; || die
+			done
+		eend $?
+	fi
 
 	local symlinks=(
 		cargo
@@ -79,8 +138,7 @@ multilib_src_install() {
 		# we need realpath on /usr/bin/* symlink return version-appended binary path.
 		# so /usr/bin/rustc should point to /opt/rust-bin-<ver>/bin/rustc-<ver>
 		local ver_i="${i}-bin-${PV}"
-		mv -v "${ED}/opt/${P}/bin/${i}" "${ED}/opt/${P}/bin/${ver_i}"
-		ln -v "${ED}/opt/${P}/bin/${i}-bin-${PV}" "${ED}/opt/${P}/bin/${i}"
+		ln -v "${ED}/opt/${P}/bin/${i}" "${ED}/opt/${P}/bin/${ver_i}"
 		dosym "../../opt/${P}/bin/${ver_i}" "/usr/bin/${ver_i}"
 	done
 
@@ -90,10 +148,12 @@ multilib_src_install() {
 	dosym "../../opt/${P}/lib/rustlib" "/usr/lib/rustlib-bin-${PV}"
 	dosym "../../../opt/${P}/share/doc/rust" "/usr/share/doc/${P}"
 
+	# musl logic can be improved a bit, but fine as is for now
 	cat <<-_EOF_ > "${T}/50${P}"
 	LDPATH="${EPREFIX}/usr/lib/rust/lib"
 	MANPATH="${EPREFIX}/usr/lib/rust/man"
-	$(usex elibc_musl 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C target-feature=-crt-static"' '')
+	$(use amd64 && usex elibc_musl 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C target-feature=-crt-static"' '')
+	$(use arm64 && usex elibc_musl 'CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C target-feature=-crt-static"' '')
 	_EOF_
 	doenvd "${T}/50${P}"
 
@@ -134,13 +194,16 @@ multilib_src_install() {
 		cp -vr "${WORKDIR}/rust-${PV}-${rust_target}/rust-std-${rust_target}/lib/rustlib/${rust_target}"\
 			"${ED}/opt/${P}/lib/rustlib" || die
 	fi
+
+	# BUG: installs x86_64 binary on other arches
+	rm -f "${ED}/opt/${P}/lib/rustlib/"*/bin/rust-llvm-dwp || die
 }
 
 pkg_postinst() {
-	eselect rust update --if-unset
+	eselect rust update
 
 	elog "Rust installs a helper script for calling GDB now,"
-	elog "for your convenience it is installed under /usr/bin/rust-gdb-bin-${PV},"
+	elog "for your convenience it is installed under /usr/bin/rust-gdb-bin-${PV}."
 
 	if has_version app-editors/emacs; then
 		elog "install app-emacs/rust-mode to get emacs support for rust."
