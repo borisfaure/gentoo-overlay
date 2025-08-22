@@ -51,7 +51,7 @@ src_install() {
 	fperms o-rwx /etc/${PN}.conf
 
 	local DOCS=(
-		ChangeLog
+		SECURITY.md
 		README.md
 		"${FILESDIR}"/README.gentoo
 	)
