@@ -33,7 +33,7 @@ RDEPEND="
 		>=dev-python/starlette-0.49[${PYTHON_USEDEP}]
 		=dev-python/tabulate-0.9*[${PYTHON_USEDEP}]
 		dev-python/twisted[${PYTHON_USEDEP}]
-		=dev-python/uvicorn-0.38*[${PYTHON_USEDEP}]
+		>=dev-python/uvicorn-0.38[${PYTHON_USEDEP}]
 		=dev-python/wsproto-1*[${PYTHON_USEDEP}]
 		>=dev-python/zeroconf-0.37[${PYTHON_USEDEP}]
 	')
