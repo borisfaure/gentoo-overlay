@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@boris.fau.re</email>
+		<name>Boris Faure</name>
+	</maintainer>
+	<longdescription>
+		NVIDIA CUDA Toolkit provides a development environment for creating
+		high performance GPU-accelerated applications. Starting with 13.1.1,
+		the toolkit includes the cuObject client library (cuobjclient) for
+		GPU-direct object storage via RDMA.
+	</longdescription>
+	<use>
+		<flag name="clang">Use clang as host compiler instead of gcc</flag>
+		<flag name="debugger">Install cuda-gdb debugger</flag>
+		<flag name="examples">Install CUDA example programs</flag>
+		<flag name="nsight">Install Nsight profiling tools</flag>
+		<flag name="profiler">Install CUPTI and nvprof profiler</flag>
+		<flag name="rdma">Install libcufile_rdma and libcuobjclient for GPUDirect Storage over RDMA</flag>
+		<flag name="sanitizer">Install compute-sanitizer</flag>
+	</use>
+</pkgmetadata>
